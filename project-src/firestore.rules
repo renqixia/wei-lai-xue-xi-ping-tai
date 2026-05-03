@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow get: if isSignedIn(); // Allow searching for other users (essential for collaborative features or role verification)
+      allow writeOrUpdate: if isOwner(userId) && (
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin']) ||
+        resource == null // Initial creation allows setting role? Better to enforce 'student'
+      );
+      
+      // More strict create
+      allow create: if isOwner(userId) && 
+        request.resource.data.role == 'student' &&
+        request.resource.data.level == 1 &&
+        request.resource.data.exp == 0;
+
+      allow update: if isOwner(userId) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'uid', 'createdAt']);
+
+      allow list: if false; // Don't allow listing users
+    }
+
+    // Reviews
+    match /reviews/{reviewId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      function isValidReview(data) {
+        return data.userId == request.auth.uid &&
+               data.steps is map &&
+               data.insight is string &&
+               data.insight.size() <= 10000 &&
+               data.createdAt == request.time;
+      }
+
+      allow create: if isSignedIn() && isValidReview(request.resource.data);
+      allow update: if false; // Reviews are immutable for integrity? Or allow updates by owner
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}

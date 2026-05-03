@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and progress",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "photo": { "type": "string" },
+        "role": { "type": "string", "enum": ["student", "teacher"] },
+        "level": { "type": "integer" },
+        "exp": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email"]
+    },
+    "Review": {
+      "title": "Review Session",
+      "description": "A daily or topic-based learning review session",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "steps": {
+          "type": "object",
+          "properties": {
+            "experience": { "type": "string" },
+            "reflection": { "type": "string" },
+            "conceptualization": { "type": "string" },
+            "active_experimentation": { "type": "string" }
+          }
+        },
+        "insight": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "steps", "insight", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "reviews/{reviewId}": {
+      "schema": "Review",
+      "description": "Learning reviews for all users"
+    }
+  }
+}

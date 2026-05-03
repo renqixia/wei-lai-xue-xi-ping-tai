@@ -1,0 +1,7 @@
+{
+  "name": "初中数学3D受力意图知识体系",
+  "description": "基于人教版初中数学大纲的3D受力知识图谱，展示七八九年级知识点间的核心关联。",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
